@@ -1,0 +1,38 @@
+1 android.sensor.accelerometer
+1 android.sensor.accelerometer
+9 android.sensor.gravity
+9 android.sensor.gravity
+10 android.sensor.linear_acceleration
+10 android.sensor.linear_acceleration
+
+26 android.sensor.wrist_tilt_gesture
+18 android.sensor.step_detector
+18 android.sensor.step_detector
+19 android.sensor.step_counter
+19 android.sensor.step_counter
+17 android.sensor.significant_motion
+
+(33171006)com.qti.sensor.amd
+(33171007)com.qti.sensor.rmd
+(33171009)com.qti.sensor.pedometer
+(33171012)com.qti.sensor.cmc
+
+(33171025)com.borqs.sensor.not_wearing
+(33171026)com.borqs.sensor.step_trigger
+
+
+
+
+1 android.sensor.accelerometer
+18 android.sensor.step_detector
+19 android.sensor.step_counter
+26 android.sensor.wrist_tilt_gesture
+(33171006)com.qti.sensor.amd,
+(33171007)com.qti.sensor.rmd
+(33171009)com.qti.sensor.pedometer
+
+
+[android.sensor.step_counter, com.borqs.sensor.not_wearing, android.sensor.accelerometer, com.qti.sensor.amd, com.qti.sensor.rmd, android.sensor.wrist_tilt_gesture, android.sensor.step_detector, com.qti.sensor.pedometer, com.qti.sensor.cmc]
+
+
+[android.sensor.step_counter, com.borqs.sensor.not_wearing, android.sensor.accelerometer, com.qti.sensor.amd, com.qti.sensor.rmd]

@@ -84,7 +84,7 @@ public class MyStepDetector implements SensorEventListener {
 
     public interface OnSensorChangeListener {
         //当步数改变时,通知外部更新UI
-        void onStep(int steps);
+        void onStep(int stepIdx);
         //当计步状态改变时，通知外部是否存储
         void onPedometerStateChange(int pedometerState);
     }
