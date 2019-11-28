@@ -9,6 +9,7 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     private MyStepDetector myStepDetector;
     int memorizeStep = 0;
-    private MyStepDetector.OnSensorChangeListener stepListener = new MyStepDetector.OnSensorChangeListener() {
+    private MyStepDetector.OnStepListener stepListener = new MyStepDetector.OnStepListener() {
 
         @Override
         public void onStep(int stepIdx) {
@@ -75,6 +76,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         setContentView(R.layout.activity_main);
         pedoText = this.findViewById(R.id.pedo);
         tiltText = this.findViewById(R.id.tilt);
@@ -104,7 +107,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         super.onStart();
 
         myStepDetector = new MyStepDetector(memorizeStep);
-        myStepDetector.setOnSensorChangeListener(stepListener);
+        myStepDetector.setOnStepListener(stepListener);
 
         myTiltDetector = new MyTiltDetector();
         myTiltDetector.setOnTiltListener(tiltListener);
@@ -129,9 +132,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return;
         }
 
-        //判断获取的数据类型是不是gsensor
         if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
-            //获得数据为float类型的数据
             showAcc(event);
 
             myStepDetector.onSensorChanged(event);
@@ -139,13 +140,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
         else if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
-            //获得数据为float类型的数据
 //            Log.i(XTAG, "TYPE_STEP_DETECTOR: " + event.values[0] +"(" + event.values.length +")");
             int stepDetected = (int)event.values[0];
         }
 
         else if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
-            //获得数据为float类型的数据
             int tmp = (int)event.values[0];
             if(aStep1st < 0){
                 aStep1st = tmp;
@@ -156,7 +155,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
         else if (event.sensor.getType() == TYPE_QTI_PEDO) {
-            //获得数据为float类型的数据
             int tmp = (int)event.values[0];
             if(qPedo1st < 0){
                 qPedo1st = tmp;
@@ -167,19 +165,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         }
 
         else if (event.sensor.getType() == TYPE_WRIST_TILT) {
-            //获得数据为float类型的数据
 //            Log.i(XTAG, "TYPE_WRIST_TILT: " + event.values[0] +"(" + event.values.length +")");
             aWristTilt += (int)event.values[0];
             aWristTiltText.setText("aTilt: "+aWristTilt);
         }
 
         else if (event.sensor.getType() == TYPE_QTI_AMD) {
-            //获得数据为float类型的数据
 //            Log.i(XTAG, "TYPE_QTI_AMD: " + event.values[0] +"(" + event.values.length +")");
         }
 
         else if (event.sensor.getType() == TYPE_QTI_RMD) {
-            //获得数据为float类型的数据
 //            Log.i(XTAG, "TYPE_QTI_RMD: " + event.values[0] +"(" + event.values.length +")");
         }
     }

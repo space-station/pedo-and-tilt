@@ -26,7 +26,7 @@ public class ScReceiver extends BroadcastReceiver {
         Intent i = new Intent(Intent.ACTION_MAIN);
         i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        if ("6868".equals(host) || "666".equals(host)) {
+        if ("6868".equals(host)) {
             i.setClass(context, MainActivity.class);
             context.startActivity(i);
         }

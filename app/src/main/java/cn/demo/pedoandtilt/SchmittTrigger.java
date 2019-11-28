@@ -2,11 +2,18 @@ package cn.demo.pedoandtilt;
 
 public class SchmittTrigger {
 
-    private float offBar = 7.0f;
-    private float onBar = 9.0f;
+    protected float offBar = 7.0f;
+    protected float onBar = 9.0f;
 
-    private boolean stateOn = true;
-    private boolean transientTrigger = false;
+    protected boolean stateOn = true;
+    protected boolean transientOnTrigger = false;
+    protected int transientOnOffState = 0; //0 off, 1 off->on, 2 off->on->off
+
+    protected int[][] mat = new int[][]{
+            {0, 1},
+            {2, 1},
+            {0, 1}
+    };
 
     public SchmittTrigger(float low, float high){
         this.offBar = low;
@@ -17,16 +24,18 @@ public class SchmittTrigger {
         if(stateOn){
             if(z< offBar){
                 stateOn = false;
-                transientTrigger = false;
+                transientOnTrigger = false;
             }
         }else {
             if (z > onBar) {
                 stateOn = true;
-                transientTrigger = true;
+                transientOnTrigger = true;
             }else {
-                transientTrigger = false;
+                transientOnTrigger = false;
             }
         }
+
+        checkTrancientOnOff(stateOn);
         return stateOn;
     }
 
@@ -34,11 +43,30 @@ public class SchmittTrigger {
         return stateOn;
     }
 
-    public boolean getTransientTrigger(){
-        return transientTrigger;
+    public boolean getTransientOnTrigger() {
+        return transientOnTrigger;
     }
 
-    public void clearTransientTrigger(){
-        transientTrigger = false;
+    public void clearTransientOnTrigger() {
+        transientOnTrigger = false;
+    }
+
+    protected void checkTrancientOnOff(boolean on) {
+        int idx = on ? 1 : 0;
+        transientOnOffState = mat[transientOnOffState][idx];
+    }
+
+    public int getTransientOnOffState() {
+        return transientOnOffState;
+    }
+
+    public boolean getTransientOnOffTrigger() {
+        return transientOnOffState == 2;
+    }
+
+    public void clearTransientOnOffTrigger() {
+        if (transientOnOffState == 2) {
+            transientOnOffState = 0;
+        }
     }
 }

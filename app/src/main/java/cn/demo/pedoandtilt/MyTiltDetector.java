@@ -3,7 +3,6 @@ package cn.demo.pedoandtilt;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
-import android.util.Log;
 
 public class MyTiltDetector implements SensorEventListener {
 
@@ -39,8 +38,8 @@ public class MyTiltDetector implements SensorEventListener {
         int deltaArc = (int)(calcDeltaArc(z) * 1000);
         arcVelRing.save(deltaArc);
 
-        if(schmitt.getTransientTrigger() && checkSpeed()){
-            schmitt.clearTransientTrigger();
+        if (schmitt.getTransientOnTrigger() && checkSpeed()) {
+            schmitt.clearTransientOnTrigger();
             tiltListener.onTilt(++tiltIdx);
         }
     }
@@ -79,7 +78,7 @@ public class MyTiltDetector implements SensorEventListener {
         //Log.d(ATAG, "arcVelRing.calcMeanBackward: " + mean);
 
         if(arcVelRing.getArcVel() < speedFloor && arcVelRing.calcMeanBackward(-1, 5) < speedFloor){
-            schmitt.clearTransientTrigger();
+            schmitt.clearTransientOnTrigger();
             return false;
         }
         if(arcVelRing.getArcVel() < speedFloor && mean > speedFloor && mean < speedCap){
