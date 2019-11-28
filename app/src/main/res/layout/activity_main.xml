@@ -9,7 +9,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:orientation="horizontal"
         android:layout_weight="1">
 
@@ -17,23 +17,24 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:background="@drawable/layout_border">
 
             <TextView
                 android:id="@+id/acc_x"
-                android:layout_width="wrap_content"
+                android:layout_width="48dp"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 />
             <TextView
                 android:id="@+id/acc_y"
-                android:layout_width="wrap_content"
+                android:layout_width="48dp"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 />
             <TextView
                 android:id="@+id/acc_z"
-                android:layout_width="wrap_content"
+                android:layout_width="48dp"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"
                 />
@@ -44,7 +45,8 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:background="@drawable/layout_border">
 
             <TextView
                 android:id="@+id/gsensor_x"
@@ -73,31 +75,40 @@
     <LinearLayout
 
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:orientation="horizontal"
         android:layout_weight="1">
-
+        <LinearLayout
+            android:id="@+id/first"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/layout_border">
         <TextView
             android:id="@+id/pedo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:textStyle="bold"
+            android:textSize="20dp"
+            android:gravity="center"
             />
+        </LinearLayout>
         <LinearLayout
             android:id="@+id/second"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:background="@drawable/layout_border">
 
         <TextView
             android:id="@+id/tilt"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:text="Hello World!"
+            android:gravity="center"
             android:textStyle="bold"
             android:focusable="true"
             android:clickable="true"
+            android:textSize="20dp"
             />
         </LinearLayout>
 
