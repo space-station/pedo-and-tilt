@@ -48,6 +48,22 @@ public class MyTiltDetector implements SensorEventListener {
         }
     }
 
+    public void onAccData(float[] values) {
+        float x = values[0];
+        float y = values[1];
+        float z = values[2];
+
+        schmitt.calcState(z);
+
+        int deltaArc = (int) (calcDeltaArc(z) * 1000);
+        arcVelRing.save(deltaArc);
+
+        if (schmitt.getTransientOnTrigger() && checkSpeed()) {
+            schmitt.clearTransientOnTrigger();
+            tiltListener.onTilt(++tiltIdx);
+        }
+    }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int i) {
 

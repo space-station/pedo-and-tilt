@@ -5,6 +5,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.util.Log;
 
+import java.text.DecimalFormat;
+
 /**
  * Use Dynamic Schmitt trigger and state machine
  * to determine acc peak
@@ -13,7 +15,7 @@ public class MyPedoDetector implements SensorEventListener {
     private final String TAG = "MyPedoDetector";
     private final String PTAG = "--PPPP--";
 
-    DynamicSchmittTrigger schmitt = new DynamicSchmittTrigger(9.7f, 10.3f, 0.5f);
+    DynamicSchmittTrigger schmitt = new DynamicSchmittTrigger(9.7f, 10.3f, 0.3f);
     VelRing velRing = new VelRing(10);
     OnPedoListener onPedoListener;
     private int pedoCount = 0;
@@ -27,12 +29,14 @@ public class MyPedoDetector implements SensorEventListener {
         velRing.fill(9.9f);
     }
 
+    DecimalFormat df = new DecimalFormat(".#");
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         Sensor sensor = event.sensor;
         synchronized (this) {
             if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                checkPedo(calcAcc(event));
+                checkPedo(calcAcc(event.values));
             }
         }
     }
@@ -46,13 +50,10 @@ public class MyPedoDetector implements SensorEventListener {
         this.onPedoListener = onPedoListener;
     }
 
-    synchronized private float calcAcc(SensorEvent event) {
-        float acc = (float) Math.sqrt(
-                +Math.pow(event.values[0], 2)
-                        + Math.pow(event.values[1], 2)
-                        + Math.pow(event.values[2], 2)
-        );
-        return acc;
+    public void onAccData(float[] values) {
+        if (values != null) {
+            checkPedo(calcAcc(values));
+        }
     }
 
     public void checkPedo(float acc) {
@@ -66,8 +67,17 @@ public class MyPedoDetector implements SensorEventListener {
         }
     }
 
+    synchronized private float calcAcc(float[] values) {
+        float acc = (float) Math.sqrt(
+                +Math.pow(values[0], 2)
+                        + Math.pow(values[1], 2)
+                        + Math.pow(values[2], 2)
+        );
+        return acc;
+    }
+
     public boolean detectPeak(float val) {
-        Log.d(PTAG, "acc: " + val);
+        Log.d(PTAG, "acc: " + df.format(val));
         schmitt.calcState(val);
         int onOffState = schmitt.getTransientOnOffState();
 
@@ -76,7 +86,7 @@ public class MyPedoDetector implements SensorEventListener {
 
         csum += (val - mean);
 
-        Log.d(PTAG, "OnOffState: " + onOffState + ", mean: " + mean + "      , csum" + csum);
+//        Log.d(PTAG, "OnOffState: " + onOffState + ", mean: " + mean + "      , csum" + csum);
         boolean onOff = schmitt.getTransientOnOffTrigger();
         if (onOff) {
             schmitt.clearTransientOnOffTrigger();

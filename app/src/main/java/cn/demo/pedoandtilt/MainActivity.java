@@ -16,6 +16,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import net.kibotu.kalmanrx.KalmanRx;
+
 import java.text.DecimalFormat;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +25,9 @@ import java.util.Set;
 
 import cn.demo.pedoandtilt.algorithm.MyPedoDetector;
 import cn.demo.pedoandtilt.algorithm.MyTiltDetector;
+import io.reactivex.Observable;
+import io.reactivex.ObservableEmitter;
+import io.reactivex.disposables.Disposable;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -44,6 +49,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private int aWristTilt = 0;
 
     private SensorManager sensorManager;
+    private Observable<float[]> sensorEventObservable;
+    private ObservableEmitter<float[]> sensorEventObservableEmitter;
+    private Disposable sensorEventDisposible;
+
     private MyPedoDetector myPedoDetector;
     private MyPedoDetector.OnPedoListener pedoListener = new MyPedoDetector.OnPedoListener() {
 
@@ -114,11 +123,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onStop() {
         super.onStop();
-        sensorManager.unregisterListener(this);
+        unRegisterSensors();
     }
 
-
     DecimalFormat decimalFormat=new DecimalFormat(".00");
+
+    public void onFilteredAccData(float[] data) {
+        myPedoDetector.onAccData(data);
+    }
 
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor == null) {
@@ -129,8 +141,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (type == Sensor.TYPE_ACCELEROMETER) {
             showAcc(event);
 
-            myPedoDetector.onSensorChanged(event);
             myTiltDetector.onSensorChanged(event);
+
+            if (sensorEventObservableEmitter != null && !sensorEventObservableEmitter.isDisposed()) {
+                sensorEventObservableEmitter.onNext(event.values);
+            }
+
         } else if (type == Sensor.TYPE_STEP_DETECTOR) {
 //            Log.i(XTAG, "TYPE_STEP_DETECTOR: " + event.values[0] +"(" + event.values.length +")");
             int stepDetected = (int)event.values[0];
@@ -180,6 +196,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     };
 
     public void registerSensors() {
+        sensorEventObservable = Observable.create(emitter -> {
+            sensorEventObservableEmitter = emitter;
+        });
+        Observable<float[]> kalmanObservable = KalmanRx.createFrom3D(sensorEventObservable);
+        Observable<float[]> kalmanLowPassObservable = KalmanRx.createLowPassFilter(kalmanObservable);
+        sensorEventDisposible = kalmanLowPassObservable.subscribe(this::onFilteredAccData, Throwable::printStackTrace);
+
+
         Set<Integer> usingSet = new HashSet<>();
         for(int i : usingTypes){
             usingSet.add(i);
@@ -196,6 +220,19 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             Log.d(XTAG, s.getStringType() + " (" + s.getType() + ")");
             sensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
+    }
+
+    public void unRegisterSensors() {
+
+        if (sensorEventDisposible != null) {
+            sensorEventDisposible.dispose();
+            sensorEventDisposible = null;
+            sensorEventObservable = null;
+            sensorEventObservableEmitter = null;
+
+        }
+
+        sensorManager.unregisterListener(this);
     }
 
     protected void changeBackgroundColor(){
