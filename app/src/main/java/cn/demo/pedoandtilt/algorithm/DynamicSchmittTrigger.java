@@ -1,24 +1,25 @@
-package cn.demo.pedoandtilt;
+package cn.demo.pedoandtilt.algorithm;
 
-public class ShiftSchmittTrigger extends SchmittTrigger {
+public class DynamicSchmittTrigger extends SchmittTrigger {
     public static final String PTAG = "--PPPP--";
+
     boolean previousStateOn = true;
     long lastPeakTs = -1;
     long currentPeakTs = -1;
-    long deltaPeakTs = 0;
-    private float shiftGap = 0.39f;
+    long peakDist = 0;
+    private float deltaFlipping = 0.39f;
     private float lowZ = 0.0f;
     private float highZ = 20.0f;
 
-    public ShiftSchmittTrigger(float low, float high, float shiftGap) {
+    public DynamicSchmittTrigger(float low, float high, float flipDelta) {
         super(low, high);
-        this.shiftGap = shiftGap;
+        this.deltaFlipping = flipDelta;
         previousStateOn = stateOn;
     }
 
     @Override
-    public boolean check(float z) {
-        boolean ret = super.check(z);
+    public boolean calcState(float z) {
+        boolean state = super.calcState(z);
 
         if (previousStateOn != stateOn) {
             if (stateOn) {
@@ -36,24 +37,24 @@ public class ShiftSchmittTrigger extends SchmittTrigger {
             if (highZ == z) {
                 currentPeakTs = System.currentTimeMillis();
             }
-            offBar = highZ - shiftGap;
+            offBar = highZ - deltaFlipping;
         } else {
             lowZ = Math.min(lowZ, z);
-            onBar = lowZ + shiftGap;
+            onBar = lowZ + deltaFlipping;
         }
-        return ret;
+        return state;
     }
 
     private void saveCurrentPeakTs(long cur) {
         if (lastPeakTs < 0) {
-            deltaPeakTs = 5000;
+            peakDist = 5000;
         } else {
-            deltaPeakTs = cur - lastPeakTs;
+            peakDist = cur - lastPeakTs;
         }
         lastPeakTs = cur;
     }
 
-    long getDeltaPeak() {
-        return deltaPeakTs;
+    public long getPeakDist() {
+        return peakDist;
     }
 }

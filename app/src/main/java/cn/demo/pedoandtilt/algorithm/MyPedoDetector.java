@@ -1,29 +1,29 @@
-package cn.demo.pedoandtilt;
+package cn.demo.pedoandtilt.algorithm;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.util.Log;
 
-public class MyStepDetector implements SensorEventListener {
-    private final String TAG = "MyStepDetector";
+/**
+ * Use Dynamic Schmitt trigger and state machine
+ * to determine acc peak
+ */
+public class MyPedoDetector implements SensorEventListener {
+    private final String TAG = "MyPedoDetector";
     private final String PTAG = "--PPPP--";
 
-    ShiftSchmittTrigger schmitt = new ShiftSchmittTrigger(9.7f, 10.3f, 0.5f);
+    DynamicSchmittTrigger schmitt = new DynamicSchmittTrigger(9.7f, 10.3f, 0.5f);
     VelRing velRing = new VelRing(10);
+    OnPedoListener onPedoListener;
+    private int pedoCount = 0;
 
-    float lastAcceleration = -1;
-    OnStepListener onStepListener;
-
-    public static int CURRENT_STEP = 0;
-    public static int TEMP_STEP = 0;
     int peakIdx = 0;
     float csum = 0f;
-    private int pedometerState = 2;
 
-    public MyStepDetector(int newSteps) {
+    public MyPedoDetector(int startPedoCount) {
         super();
-        CURRENT_STEP = newSteps;
+        pedoCount = startPedoCount;
         velRing.fill(9.9f);
     }
 
@@ -32,7 +32,7 @@ public class MyStepDetector implements SensorEventListener {
         Sensor sensor = event.sensor;
         synchronized (this) {
             if (sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-                calcAcceleration(event);
+                checkPedo(calcAcc(event));
             }
         }
     }
@@ -42,44 +42,41 @@ public class MyStepDetector implements SensorEventListener {
 
     }
 
-    public void setOnStepListener(OnStepListener onStepListener) {
-        this.onStepListener = onStepListener;
+    public void setOnPedoListener(OnPedoListener onPedoListener) {
+        this.onPedoListener = onPedoListener;
     }
 
-    synchronized private void calcAcceleration(SensorEvent event) {
-        float acceleration = (float) Math.sqrt(Math.pow(event.values[0], 2)
-                + Math.pow(event.values[1], 2) + Math.pow(event.values[2], 2));
-        detectStep(acceleration);
+    synchronized private float calcAcc(SensorEvent event) {
+        float acc = (float) Math.sqrt(
+                +Math.pow(event.values[0], 2)
+                        + Math.pow(event.values[1], 2)
+                        + Math.pow(event.values[2], 2)
+        );
+        return acc;
     }
 
-    public void detectStep(float curAcceleration) {
-        Log.d(PTAG, "acc: " + curAcceleration);
-        if (lastAcceleration > 0) {
-            boolean detected = detectPeak(curAcceleration, lastAcceleration);
-            if (detected) {
-                long deltaTime2LastPeak = schmitt.getDeltaPeak();
-                Log.d(PTAG, "----------Peak detected!" + (++peakIdx) + ", deltaTime: " + deltaTime2LastPeak);
+    public void checkPedo(float acc) {
+        if (detectPeak(acc)) {
+            long peakDist = schmitt.getPeakDist();
+            Log.d(PTAG, "---------- Peak detected! " + (++peakIdx) + ", peakDist: " + peakDist);
 
-                if (deltaTime2LastPeak >= 166 && deltaTime2LastPeak <= 2000) {
-                    reportStep();
-                }
-                if (deltaTime2LastPeak >= 200) {
-                }
+            if (peakDist >= 166 && peakDist <= 2000) {
+                reportPedo();
             }
         }
-        lastAcceleration = curAcceleration;
     }
 
-    public boolean detectPeak(float newValue, float oldValue) {
-        schmitt.check(newValue);
+    public boolean detectPeak(float val) {
+        Log.d(PTAG, "acc: " + val);
+        schmitt.calcState(val);
         int onOffState = schmitt.getTransientOnOffState();
 
-        velRing.save(newValue);
+        velRing.save(val);
         float mean = velRing.calcMeanBackward(0, 10);
 
-        csum += (newValue - mean);
+        csum += (val - mean);
 
-        Log.d(PTAG, "mean:" + mean + ", OnOffState: " + onOffState + "      , csum" + csum);
+        Log.d(PTAG, "OnOffState: " + onOffState + ", mean: " + mean + "      , csum" + csum);
         boolean onOff = schmitt.getTransientOnOffTrigger();
         if (onOff) {
             schmitt.clearTransientOnOffTrigger();
@@ -87,16 +84,17 @@ public class MyStepDetector implements SensorEventListener {
         return onOff;
     }
 
-    private void reportStep() {
-        CURRENT_STEP++;
-        if (onStepListener != null) {
-            onStepListener.onStep(CURRENT_STEP);
+    private void reportPedo() {
+        pedoCount++;
+        if (onPedoListener != null) {
+            onPedoListener.onPedo(pedoCount);
         }
     }
 
-    public interface OnStepListener {
-        void onStep(int stepIdx);
-        void onPedometerStateChange(int pedometerState);
+    public interface OnPedoListener {
+        void onPedo(int stepIdx);
+
+        void onDetectorStateChange(int pedometerState);
     }
 
     class VelRing {

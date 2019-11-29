@@ -6,11 +6,11 @@ import android.content.Intent;
 import android.net.Uri;
 import android.util.Log;
 
-public class ScReceiver extends BroadcastReceiver {
+public class SecretCodeReceiver extends BroadcastReceiver {
 
-    private static final String TAG = "ScReceiver";
+    private static final String TAG = "SecretCodeReceiver";
 
-    public ScReceiver() {
+    public SecretCodeReceiver() {
     }
 
     @Override
@@ -23,10 +23,10 @@ public class ScReceiver extends BroadcastReceiver {
             Log.d(TAG, "uri is null");
             return;
         }
-        Intent i = new Intent(Intent.ACTION_MAIN);
-        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         if ("6868".equals(host)) {
+            Intent i = new Intent(Intent.ACTION_MAIN);
+            i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             i.setClass(context, MainActivity.class);
             context.startActivity(i);
         }

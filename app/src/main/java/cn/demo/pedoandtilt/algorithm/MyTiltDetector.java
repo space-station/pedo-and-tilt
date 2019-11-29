@@ -1,9 +1,13 @@
-package cn.demo.pedoandtilt;
+package cn.demo.pedoandtilt.algorithm;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 
+/**
+ * Use Schmitt trigger and moving window filter
+ * to determine tilt
+ */
 public class MyTiltDetector implements SensorEventListener {
 
     public static final String ATAG = "======";
@@ -33,7 +37,7 @@ public class MyTiltDetector implements SensorEventListener {
         float y = event.values[1];
         float z = event.values[2];
 
-        schmitt.check(z);
+        schmitt.calcState(z);
 
         int deltaArc = (int)(calcDeltaArc(z) * 1000);
         arcVelRing.save(deltaArc);
@@ -53,8 +57,7 @@ public class MyTiltDetector implements SensorEventListener {
         float gz = 9.85f;
         if(z>gz){
             z = gz;
-        }
-        else if(z<-gz){
+        } else if(z<-gz){
             z = -gz;
         }
 
@@ -111,6 +114,7 @@ public class MyTiltDetector implements SensorEventListener {
         int getArcVel(){
             return ring[cursor];
         }
+
         int calcMeanBackward(int offset, int n){
             int sum = 0;
             int l = -n;

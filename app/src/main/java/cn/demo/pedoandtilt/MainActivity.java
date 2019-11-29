@@ -13,21 +13,24 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import cn.demo.pedoandtilt.algorithm.MyPedoDetector;
+import cn.demo.pedoandtilt.algorithm.MyTiltDetector;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
     public static final String XTAG = "xxxxxxxxxxxxxx";
 
-    TextView mAcc_x;
-    TextView mAcc_y;
-    TextView mAcc_z;
+    TextView accXText;
+    TextView accYText;
+    TextView accZText;
     TextView aStepCounterText;
     TextView qPedometerText;
     TextView aWristTiltText;
@@ -35,32 +38,22 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     TextView pedoText;
     TextView tiltText;
 
-    LinearLayout second;
-
-    private float accX, accY, accZ;
-    private int aStep = 0,qPedo = 0, aWristTilt = 0;
     private int aStep1st = -1, qPedo1st = -1;
-    boolean dft = true;
-
-    private int myPedo, myTilt;
+    LinearLayout second;
+    boolean defaultColor = true;
+    private int aWristTilt = 0;
 
     private SensorManager sensorManager;
-
-    Set<String> receivedTypeSet = new HashSet<String>();
-    List<String> receivedTypeList = new ArrayList<String>();
-
-    private MyStepDetector myStepDetector;
-    int memorizeStep = 0;
-    private MyStepDetector.OnStepListener stepListener = new MyStepDetector.OnStepListener() {
+    private MyPedoDetector myPedoDetector;
+    private MyPedoDetector.OnPedoListener pedoListener = new MyPedoDetector.OnPedoListener() {
 
         @Override
-        public void onStep(int stepIdx) {
-            pedoText.setText("pedo: " + stepIdx);
+        public void onPedo(int pedoIdx) {
+            pedoText.setText("pedo: " + pedoIdx);
         }
 
         @Override
-        public void onPedometerStateChange(int pedometerState) {
-
+        public void onDetectorStateChange(int detectorState) {
         }
     };
 
@@ -82,9 +75,9 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         pedoText = this.findViewById(R.id.pedo);
         tiltText = this.findViewById(R.id.tilt);
         second=this.findViewById(R.id.second);
-        mAcc_x=this.findViewById(R.id.acc_x);
-        mAcc_y=this.findViewById(R.id.acc_y);
-        mAcc_z=this.findViewById(R.id.acc_z);
+        accXText = this.findViewById(R.id.acc_x);
+        accYText = this.findViewById(R.id.acc_y);
+        accZText = this.findViewById(R.id.acc_z);
         aStepCounterText =this.findViewById(R.id.gsensor_x);
         qPedometerText =this.findViewById(R.id.gsensor_y);
         aWristTiltText =this.findViewById(R.id.gsensor_z);
@@ -94,7 +87,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         tiltText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                changeBackgroundColor();
+//                changeBackgroundColor();
             }
         });
 
@@ -106,16 +99,16 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     protected void onStart() {
         super.onStart();
 
-        myStepDetector = new MyStepDetector(memorizeStep);
-        myStepDetector.setOnStepListener(stepListener);
+        myPedoDetector = new MyPedoDetector(0);
+        myPedoDetector.setOnPedoListener(pedoListener);
 
         myTiltDetector = new MyTiltDetector();
         myTiltDetector.setOnTiltListener(tiltListener);
 
-        registerSensors();
-
         pedoText.setText("pedo: 0");
         tiltText.setText("tilt: 0");
+
+        registerSensors();
     }
 
     @Override
@@ -132,56 +125,44 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             return;
         }
 
-        if(event.sensor.getType() == Sensor.TYPE_ACCELEROMETER){
+        int type = event.sensor.getType();
+        if (type == Sensor.TYPE_ACCELEROMETER) {
             showAcc(event);
 
-            myStepDetector.onSensorChanged(event);
+            myPedoDetector.onSensorChanged(event);
             myTiltDetector.onSensorChanged(event);
-        }
-
-        else if (event.sensor.getType() == Sensor.TYPE_STEP_DETECTOR) {
+        } else if (type == Sensor.TYPE_STEP_DETECTOR) {
 //            Log.i(XTAG, "TYPE_STEP_DETECTOR: " + event.values[0] +"(" + event.values.length +")");
             int stepDetected = (int)event.values[0];
-        }
-
-        else if (event.sensor.getType() == Sensor.TYPE_STEP_COUNTER) {
+        } else if (type == Sensor.TYPE_STEP_COUNTER) {
             int tmp = (int)event.values[0];
             if(aStep1st < 0){
                 aStep1st = tmp;
             }
             //Log.i(XTAG, "TYPE_STEP_COUNTER: " + event.values[0] +"(" + event.values.length +")");
-            aStep = tmp - aStep1st + 1;
+            int aStep = tmp - aStep1st + 1;
             aStepCounterText.setText("aStep: "+aStep);
-        }
-
-        else if (event.sensor.getType() == TYPE_QTI_PEDO) {
+        } else if (type == TYPE_QTI_PEDO) {
             int tmp = (int)event.values[0];
             if(qPedo1st < 0){
                 qPedo1st = tmp;
             }
 //            Log.i(XTAG, "TYPE_QTI_PEDO: " + event.values[0] +"(" + event.values.length +")");
-            qPedo = tmp - qPedo1st + 1;
+            int qPedo = tmp - qPedo1st + 1;
             qPedometerText.setText("qPedo: "+qPedo);
-        }
-
-        else if (event.sensor.getType() == TYPE_WRIST_TILT) {
+        } else if (type == TYPE_WRIST_TILT) {
 //            Log.i(XTAG, "TYPE_WRIST_TILT: " + event.values[0] +"(" + event.values.length +")");
             aWristTilt += (int)event.values[0];
             aWristTiltText.setText("aTilt: "+aWristTilt);
-        }
-
-        else if (event.sensor.getType() == TYPE_QTI_AMD) {
+        } else if (type == TYPE_QTI_AMD) {
 //            Log.i(XTAG, "TYPE_QTI_AMD: " + event.values[0] +"(" + event.values.length +")");
-        }
-
-        else if (event.sensor.getType() == TYPE_QTI_RMD) {
+        } else if (type == TYPE_QTI_RMD) {
 //            Log.i(XTAG, "TYPE_QTI_RMD: " + event.values[0] +"(" + event.values.length +")");
         }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-
     }
 
     public static int TYPE_WRIST_TILT = 26;
@@ -212,14 +193,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             if(!tmp.add(s.getStringType())){
                 continue;
             }
-            Log.d(XTAG, s.getStringType() + " (" + s.getType()+","+ s.getId() + ")");
+            Log.d(XTAG, s.getStringType() + " (" + s.getType() + ")");
             sensorManager.registerListener(this, s, SensorManager.SENSOR_DELAY_NORMAL);
         }
     }
 
     protected void changeBackgroundColor(){
-        dft = !dft;
-        int res = dft ? android.R.color.background_light : R.color.Green;
+        defaultColor = !defaultColor;
+        int res = defaultColor ? android.R.color.background_light : R.color.Green;
         second.setBackgroundResource(res);
     }
 
@@ -227,21 +208,17 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         pedoText.setTextColor(Color.RED);
         tiltText.setTextColor(Color.RED);
 
-        mAcc_x.setTextColor(Color.BLUE);
-        mAcc_y.setTextColor(Color.BLUE);
-        mAcc_z.setTextColor(Color.BLUE);
+        accXText.setTextColor(Color.BLUE);
+        accYText.setTextColor(Color.BLUE);
+        accZText.setTextColor(Color.BLUE);
         aStepCounterText.setTextColor(Color.GREEN);
         qPedometerText.setTextColor(Color.GREEN);
         aWristTiltText.setTextColor(Color.GREEN);
     }
 
-    void showAcc(SensorEvent event){
-        accX = event.values[0];
-        accY = event.values[1];
-        accZ = event.values[2];
-
-        mAcc_x.setText("x: "+ decimalFormat.format(accX));
-        mAcc_y.setText("y: "+ decimalFormat.format(accY));
-        mAcc_z.setText("z: "+ decimalFormat.format(accZ));
+    void showAcc(@NonNull SensorEvent event) {
+        accXText.setText("x: " + decimalFormat.format(event.values[0]));
+        accYText.setText("y: " + decimalFormat.format(event.values[1]));
+        accZText.setText("z: " + decimalFormat.format(event.values[2]));
     }
 }

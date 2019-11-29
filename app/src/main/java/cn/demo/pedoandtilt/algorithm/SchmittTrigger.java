@@ -1,4 +1,4 @@
-package cn.demo.pedoandtilt;
+package cn.demo.pedoandtilt.algorithm;
 
 public class SchmittTrigger {
 
@@ -7,7 +7,13 @@ public class SchmittTrigger {
 
     protected boolean stateOn = true;
     protected boolean transientOnTrigger = false;
-    protected int transientOnOffState = 0; //0 off, 1 off->on, 2 off->on->off
+
+    /**
+     * 0 off,
+     * 1 off->on,
+     * 2 off->on->off
+     */
+    protected int transientOnOffState = 0;
 
     protected int[][] mat = new int[][]{
             {0, 1},
@@ -15,12 +21,12 @@ public class SchmittTrigger {
             {0, 1}
     };
 
-    public SchmittTrigger(float low, float high){
-        this.offBar = low;
-        this.onBar = high;
+    public SchmittTrigger(float offBar, float onBar) {
+        this.offBar = offBar;
+        this.onBar = onBar;
     }
 
-    public boolean check(float z){
+    public boolean calcState(float z) {
         if(stateOn){
             if(z< offBar){
                 stateOn = false;
@@ -35,7 +41,7 @@ public class SchmittTrigger {
             }
         }
 
-        checkTrancientOnOff(stateOn);
+        calcTrancientOnOffState(stateOn);
         return stateOn;
     }
 
@@ -51,9 +57,10 @@ public class SchmittTrigger {
         transientOnTrigger = false;
     }
 
-    protected void checkTrancientOnOff(boolean on) {
+    protected int calcTrancientOnOffState(boolean on) {
         int idx = on ? 1 : 0;
         transientOnOffState = mat[transientOnOffState][idx];
+        return transientOnOffState;
     }
 
     public int getTransientOnOffState() {
